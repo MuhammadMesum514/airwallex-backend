@@ -57,11 +57,34 @@ intentRouter.post('/create', async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
+intentRouter.get('/status/:id', async (req, res) => {
+  const { id } = req.params;
+  const retrieveIntentUrl = `${config.airwallex.clientApiHost}/api/v1/pa/payment_intents/${id}`;
+
+  try {
+    // Get the authorization token
+    const token = await getToken();
+
+    // Call the Airwallex API to retrieve the payment intent
+    const intentRes = await axios.get(retrieveIntentUrl, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    // Extract and return the status
+    const status = intentRes.data.status; // E.g., "SUCCEEDED", "FAILED", or "PENDING"
+    return res.status(200).json({ id, status });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: error.message });
+  }
+});
 
 // Retrieve a PaymentIntent.
 intentRouter.get('/:id', async (req, res) => {
   const { id } = req.params;
-  const createIntentUrl = `${config.airwallex.clientPciApiHost}/api/v1/pa/payment_intents/${id}`;
+  const createIntentUrl = `${config.airwallex.clientApiHost}/api/v1/pa/payment_intents/${id}`;
   try {
     // STEP #1: Before retrieve a intent, should get authorized token first.
     const token = await getToken();
